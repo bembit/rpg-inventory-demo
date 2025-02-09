@@ -1,22 +1,24 @@
 const itemPrefixNames = ["Heroic", "Sadists", "Peacekeepers", "Huge"];
 const itemSuffixNames = ["of the Monkey", "of the Eagle", "of the Owl"];
 const itemBaseTypes = ["Helmet", "Shield", "Ring", "Gloves"];
+
 const itemSizes = {
     "Helmet": [2, 2],
     "Shield": [2, 3],
     "Gloves": [2, 2],
     "Ring": [1, 1]
 };
+
 const itemImages = {
-    "Helmet": "./helmet.jpg",
-    "Shield": "./shield.jpg",
-    "Gloves": "./gloves.jpg",
-    "Ring": "./ring.jpg",
+    "Helmet": "./img/helmet.jpg",
+    "Shield": "./img/shield.jpg",
+    "Gloves": "./img/gloves.jpg",
+    "Ring": "./img/ring.jpg",
 }
 
 function getItemColor(itemType) {
     const colors = {
-        "Helmet": "blue",
+        "Helmet": "lightblue",
         "Shield": "red",
         "Gloves": "green",
         "Ring": "gold"
@@ -123,6 +125,11 @@ function findSpaceForItem(width, height) {
         }
     }
 
+    // take a random sound from the two available
+    const inventorySounds = ['./sounds/invfull.ogg', './sounds/invfull2.ogg'];
+    let sound = inventorySounds[Math.floor(Math.random() * inventorySounds.length)];
+    playSound(sound);
+
     console.log("No space available for the item.");
     return null;
 }
@@ -147,6 +154,9 @@ function placeItemInInventory() {
         }
     }
     inventory.push(newItem);
+    let itemSounds = ['./sounds/item.ogg', './sounds/item2.ogg'];
+    let sound = itemSounds[Math.floor(Math.random() * itemSounds.length)];
+    playSound(sound);
     renderInventorySummary();
     console.log(inventory);
     renderInventory();
@@ -156,9 +166,12 @@ function renderInventorySummary() {
     const summaryContainer = document.getElementById('summary');
     summaryContainer.innerHTML = '';
     for (const item of inventory) {
-        const itemDiv = document.createElement('div');
-        itemDiv.textContent = `${item.name} (${item.x}, ${item.y})`;
-        summaryContainer.appendChild(itemDiv);
+        const listItem = document.createElement('li');
+        listItem.textContent = `${item.name} (${item.x}, ${item.y})`;
+
+        const itemColor = getItemColor(item.type);  // get the color for the item type
+        listItem.style.color = itemColor;
+        summaryContainer.appendChild(listItem);
     }
 }
 
@@ -181,36 +194,84 @@ function removeItemFromInventory(itemId) {
 
 function renderInventory() {
     inventoryContainer.innerHTML = '';
+  
+    // render the grid cells
     for (let y = 0; y < inventoryHeight; y++) {
         for (let x = 0; x < inventoryWidth; x++) {
             const cell = document.createElement('div');
             cell.classList.add('inventory-cell');
             
+            // if an item occupies this cell, mark it as occupied
             const item = inventoryGrid[y][x];
-            if (item) {
-                // check and use top left cell only
-                const isTopLeftCell = (x === item.x && y === item.y);
-                if (isTopLeftCell) {
 
+            if (item) {
+                cell.classList.add('occupied');
+                cell.style.backgroundColor = getItemColor(item.type);
+            
+                // if this is the top-left cell of the item, add a popup for item stats
+                const isTopLeftCell = (x === item.x && y === item.y);
+
+                if (isTopLeftCell) {
                     const itemPopup = document.createElement('div');
                     itemPopup.classList.add('item-popup');
                     itemPopup.innerHTML = generateItemStats(item);
                     cell.appendChild(itemPopup);
-
-                    // cell.textContent = item.name;
-                    // const removeButton = document.createElement('button');
-                    // removeButton.textContent = 'Remove';
-                    // removeButton.onclick = () => removeItemFromInventory(item.id);
-                    // cell.appendChild(removeButton);
-
-                    cell.style.backgroundImage = `url(${item.image})`;
                 }
-                // cell.style.backgroundImage = `url(${item.image})`;
-                cell.classList.add('occupied');
-                cell.style.backgroundColor = getItemColor(item.type);
             }
             inventoryContainer.appendChild(cell);
         }
+    }
+  
+    // should match CSS grid cell size
+    const cellWidth = 30;
+    const cellHeight = 30;
+    
+    for (const item of inventory) {
+        const overlay = document.createElement('div');
+        overlay.classList.add('item-overlay');
+
+        // position the overlay to cover the area occupied by the item.
+        // inventory grid starts at (0,0) in grid coordinates.
+        overlay.style.left = `${item.x * cellWidth}px`;
+        overlay.style.top = `${item.y * cellHeight}px`;
+        overlay.style.width = `${item.size[0] * cellWidth}px`;
+        overlay.style.height = `${item.size[1] * cellHeight}px`;
+        
+        // aply the background image so it spans the full area.
+        overlay.style.backgroundImage = `url(${item.image})`;
+        // overlay.style.backgroundSize = `${item.size[0] * cellWidth}px ${item.size[1] * cellHeight}px`;
+        // overlay.style.backgroundSize = "cover";
+
+        // inventoryContainer position: relative
+        inventoryContainer.appendChild(overlay);
+    }
+}
+  
+function renderItemTypeList() {
+    const itemTypeListContainer = document.getElementById('item-type-list');
+    itemTypeListContainer.innerHTML = '';
+
+    // count occurrences of each item type
+    const itemTypeCounts = {};
+    for (const item of inventory) {
+        if (itemTypeCounts[item.type]) {
+            itemTypeCounts[item.type]++;
+        } else {
+            itemTypeCounts[item.type] = 1;
+        }
+    }
+
+    const totalItems = inventory.length;
+
+    // render each item type and its percentage
+    for (const itemType of Object.keys(itemTypeCounts)) {
+        const count = itemTypeCounts[itemType];
+        const percentage = ((count / totalItems) * 100).toFixed(2);
+        const listItem = document.createElement('li');
+        
+        listItem.textContent = `${itemType}: ${count} (${percentage}%)`;
+
+        itemTypeListContainer.appendChild(listItem);
     }
 }
 
@@ -220,11 +281,51 @@ function generateItemStats(item) {
         <strong>Prefix:</strong> ${item.prefix}<br>
         <strong>Suffix:</strong> ${item.suffix}<br>
         <strong>Size:</strong> ${item.size.join('x')}<br>
-        <button onclick="removeItemFromInventory(${item.id})">Remove</button>
+        <button onclick="removeItemFromInventory(${item.id})">Delete</button>
     `;
 }
 
+function resetInventory() {
+    inventory.forEach(item => removeItemFromInventory(item.id));
+    inventory = [];
+    if (inventory.length === 0) {
+        console.log("Inventory is 0");
+        let kekSound = ['./sounds/reset.ogg'];
+        let sound = kekSound[Math.floor(Math.random() * kekSound.length)];
+        playSound(sound);
+        renderInventory();
+        renderItemTypeList();
+    }
+}
+
+let currentAudio = null;
+
+function playSound(sound) {
+    // pause current
+    if (currentAudio && !currentAudio.paused) {
+        currentAudio.pause();
+        console.log('Paused previous sound.');
+    }
+
+    // play new
+    const audio = new Audio(sound);
+    audio.volume = 0.1;
+    audio.play();
+    
+    // set as current
+    currentAudio = audio;
+    
+    console.log(`Playing sound: ${sound}`);
+}
+
+// check if a sound is currently playing
+function isSoundPlaying() {
+    return currentAudio && !currentAudio.paused;
+}
+
 document.getElementById('addToInventory').addEventListener('click', placeItemInInventory);
+document.getElementById('addToInventory').addEventListener('click', renderItemTypeList);
+document.getElementById('resetInventory').addEventListener('click', resetInventory);
 
 // init
 renderInventory();

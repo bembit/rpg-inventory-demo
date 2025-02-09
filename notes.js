@@ -364,3 +364,52 @@ generatedItem.innerHTML = generateItem();
 
 <button id="generateItem">Generate Item</button>
 <span id="generatedItem"></span>
+
+function renderInventory() {
+    inventoryContainer.innerHTML = '';
+    for (let y = 0; y < inventoryHeight; y++) {
+        for (let x = 0; x < inventoryWidth; x++) {
+            const cell = document.createElement('div');
+            cell.classList.add('inventory-cell');
+            
+            const item = inventoryGrid[y][x];
+            if (item) {
+                // check and use top left cell only
+                const isTopLeftCell = (x === item.x && y === item.y);
+                if (isTopLeftCell) {
+
+                    const itemPopup = document.createElement('div');
+                    itemPopup.classList.add('item-popup');
+                    itemPopup.innerHTML = generateItemStats(item);
+                    cell.appendChild(itemPopup);
+
+                    // cell.textContent = item.name;
+                    // const removeButton = document.createElement('button');
+                    // removeButton.textContent = 'Remove';
+                    // removeButton.onclick = () => removeItemFromInventory(item.id);
+                    // cell.appendChild(removeButton);
+
+                    cell.style.backgroundImage = `url(${item.image})`;
+                }
+                // cell.style.backgroundImage = `url(${item.image})`;
+                cell.classList.add('occupied');
+                cell.style.backgroundColor = getItemColor(item.type);
+            }
+            inventoryContainer.appendChild(cell);
+        }
+    }
+}
+
+document.getElementById('addInventorySize').addEventListener('click', addInventorySize);
+
+function addInventorySize() {
+    inventoryWidth += 8;
+    inventoryHeight += 1;
+    console.log(inventoryWidth);
+    console.log(inventoryHeight);
+    inventoryGrid = Array.from({ length: inventoryHeight }, () => Array(inventoryWidth).fill(null));
+    renderInventory();
+}
+
+<!-- <button id="addInventorySize">Add inventory size</button> -->
+<!-- <button id="resetInventory">Move items to Bank</button> -->
