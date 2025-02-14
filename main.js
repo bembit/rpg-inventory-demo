@@ -61,35 +61,14 @@ function generateItem() {
 }
 
 let inventory = [];
-console.log(inventory);
+// console.log("Empty inventory", inventory);
 
 const inventoryWidth = 20;
 const inventoryHeight = 8;
 const inventoryGrid = Array.from({ length: inventoryHeight }, () => Array(inventoryWidth).fill(null));
 const inventoryContainer = document.getElementById('inventory');
 
-// based on Y - from up to down first approach
-// function findSpaceForItem(width, height) {
-//     for (let x = 0; x <= inventoryWidth - width; x++) {
-//         for (let y = 0; y <= inventoryHeight - height; y++) {
-//             let fits = true;
-//             for (let dy = 0; dy < height; dy++) {
-//                 for (let dx = 0; dx < width; dx++) {
-//                     if (inventoryGrid[y + dy][x + dx] !== null) {
-//                         fits = false;
-//                         break;
-//                     }
-//                 }
-//                 if (!fits) break;
-//             }
-//             if (fits) return { x, y };
-//         }
-//     }
-//     return null;
-// }
-
 // debug print
-// I wonder how do these work in games, do they flag columns if full for specific size?
 function findSpaceForItem(width, height) {
     console.log(`Looking for space for item of size ${width}x${height} in inventory...`);
 
@@ -295,6 +274,7 @@ function resetInventory() {
         playSound(sound);
         renderInventory();
         renderItemTypeList();
+        renderInventorySummary();
     }
 }
 
